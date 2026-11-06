@@ -26,6 +26,8 @@ class GitHubUpdateChecker : Closeable {
     private val json = Json { ignoreUnknownKeys = true }
 
     fun checkUpdate(track: UpdateTrack, githubToken: String): UpdateInfo? {
+        // Fork builds are distributed by this repository, not the upstream release feed.
+        if (BuildConfig.APPLICATION_ID.endsWith(".dualcore")) return null
         val request = client.newRequest()
         request.setURL(
             when (track) {
@@ -113,3 +115,4 @@ class GitHubUpdateChecker : Closeable {
         @SerialName("version_code") val versionCode: Int = 0,
     )
 }
+

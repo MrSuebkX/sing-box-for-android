@@ -178,8 +178,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
                 return
             }
 
-            monitorMihomo()
-        if (commandServer.needWIFIState()) {
+            if (commandServer.needWIFIState()) {
                 val wifiPermission =
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                         android.Manifest.permission.ACCESS_FINE_LOCATION
@@ -486,3 +485,4 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
     override fun connectSSHAgent(): Int = -1
 }
+
