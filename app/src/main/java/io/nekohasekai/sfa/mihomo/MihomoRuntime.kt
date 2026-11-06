@@ -36,8 +36,8 @@ object MihomoRuntime {
         return binary.absolutePath
     }
 
-    private fun tcpPort(): Int = ServerSocket(0, 0, InetAddress.getLoopbackAddress()).use { it.localPort }
-    private fun dnsPort(): Int = DatagramSocket(0, InetAddress.getLoopbackAddress()).use { it.localPort }
+    private fun tcpPort(): Int = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1")).use { it.localPort }
+    private fun dnsPort(): Int = DatagramSocket(0, InetAddress.getByName("127.0.0.1")).use { it.localPort }
 
     private fun runtimeYaml(content: String, socks: Int, dnsPort: Int, api: Int, token: String): String {
         val map = CoreConfig.clashMap(content) ?: error("Expected Clash configuration")
@@ -84,8 +84,8 @@ object MihomoRuntime {
     @Synchronized fun prepare(context: Context, content: String): String {
         close()
         val socks = tcpPort()
-        val dns = dnsPort()
         val api = generateSequence { tcpPort() }.first { it != socks }
+        val dns = generateSequence { dnsPort() }.first { it != socks && it != api }
         val token = UUID.randomUUID().toString()
         val directory = File(context.filesDir, "mihomo").also { it.mkdirs() }
         val file = File(directory, "runtime.yaml")

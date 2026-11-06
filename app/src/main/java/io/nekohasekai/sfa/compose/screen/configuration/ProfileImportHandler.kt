@@ -272,7 +272,7 @@ class ProfileImportHandler(private val context: Context) {
                 userOrder = ProfileManager.nextOrder()
             }
 
-        // Create empty config file for remote profile
+        // Download and validate before saving the remote profile
         val fileID = ProfileManager.nextFileID()
         val configDirectory = File(context.filesDir, "configs").also { it.mkdirs() }
         val configFile = File(configDirectory, "$fileID.json")
@@ -283,6 +283,7 @@ class ProfileImportHandler(private val context: Context) {
 
         // Create profile in database and select it
         ProfileManager.create(profile, andSelect = true)
+        io.nekohasekai.sfa.bg.UpdateProfileWork.reconfigureUpdater()
 
         return ImportResult.Success(profile)
     }
@@ -365,6 +366,7 @@ class ProfileImportHandler(private val context: Context) {
 
             // Create profile in database and select it
             ProfileManager.create(profile, andSelect = true)
+        io.nekohasekai.sfa.bg.UpdateProfileWork.reconfigureUpdater()
 
             ImportResult.Success(profile)
         } catch (e: Exception) {
