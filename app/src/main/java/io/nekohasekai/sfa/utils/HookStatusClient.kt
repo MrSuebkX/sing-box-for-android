@@ -22,20 +22,26 @@ object HookStatusClient {
     }
 
     fun refresh() {
-        val context = appContext ?: return
-        val binder = ConnectivityBinderUtils.getBinder(context) ?: run {
-            statusFlow.value = null
-            return
-        }
-        ConnectivityBinderUtils.withParcel { data, reply ->
+        refreshStatus { readStatus() }
+    }
+
+    // A separately installed system hook can reject forks or incompatible clients.
+    // It is optional: denial must clear stale privileges and leave the app usable.
+    internal fun refreshStatus(readStatus: () -> Status?) {
+        statusFlow.value = optionalHookRequest(readStatus)
+    }
+
+    private fun readStatus(): Status? {
+        val context = appContext ?: return null
+        val binder = ConnectivityBinderUtils.getBinder(context) ?: return null
+        return ConnectivityBinderUtils.withParcel { data, reply ->
             data.writeInterfaceToken(HookStatusKeys.DESCRIPTOR)
             val ok = binder.transact(HookStatusKeys.TRANSACTION_STATUS, data, reply, 0)
             if (!ok) {
-                statusFlow.value = null
-                return
+                return@withParcel null
             }
             reply.readException()
-            statusFlow.value = Status(
+            Status(
                 active = reply.readInt() != 0,
                 lastPatchedAt = reply.readLong(),
                 version = reply.readInt(),
@@ -45,6 +51,10 @@ object HookStatusClient {
     }
 
     fun getInstalledPackages(context: Context, flags: Long, userId: Int): List<PackageInfo>? {
+        return optionalHookRequest { queryInstalledPackages(context, flags, userId) }
+    }
+
+    private fun queryInstalledPackages(context: Context, flags: Long, userId: Int): List<PackageInfo>? {
         val binder = ConnectivityBinderUtils.getBinder(context) ?: return null
         return ConnectivityBinderUtils.withParcel { data, reply ->
             data.writeInterfaceToken(HookStatusKeys.DESCRIPTOR)
@@ -57,5 +67,12 @@ object HookStatusClient {
             @Suppress("UNCHECKED_CAST")
             (slice as ParceledListSlice<PackageInfo>).list
         }
+    }
+
+    private fun <T> optionalHookRequest(request: () -> T?): T? = try {
+        request()
+    } catch (_: Exception) {
+        // No authorization, incompatible protocol, or dead Binder: use ordinary APIs.
+        null
     }
 }

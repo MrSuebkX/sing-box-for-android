@@ -63,6 +63,8 @@ jobs:
           gzip -dc "$RUNNER_TEMP/mihomo.gz" > app/src/main/jniLibs/arm64-v8a/libmihomo.so
           chmod 755 app/src/main/jniLibs/arm64-v8a/libmihomo.so
       - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
       - name: Test and compile installable APK
         run: |
           chmod +x gradlew
@@ -88,4 +90,3 @@ jobs:
           name: test-reports
           path: app/build/reports/tests/
           if-no-files-found: ignore
-
