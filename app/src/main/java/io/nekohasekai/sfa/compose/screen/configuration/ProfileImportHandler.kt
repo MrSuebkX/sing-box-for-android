@@ -52,7 +52,7 @@ class ProfileImportHandler(private val context: Context) {
 
             // Try to detect if it's a JSON configuration file
             val dataString = String(data)
-            if (isJsonConfiguration(dataString)) {
+            if (isJsonConfiguration(dataString) || runCatching { io.nekohasekai.sfa.mihomo.CoreConfig.clashMap(dataString) != null }.getOrDefault(false)) {
                 // It's a JSON configuration, import it directly as a local profile
                 return@withContext importJsonConfiguration(dataString, filename)
             }
@@ -82,7 +82,7 @@ class ProfileImportHandler(private val context: Context) {
             val filename = getFileNameFromUri(uri)
             val dataString = String(data)
 
-            if (isJsonConfiguration(dataString)) {
+            if (isJsonConfiguration(dataString) || runCatching { io.nekohasekai.sfa.mihomo.CoreConfig.clashMap(dataString) != null }.getOrDefault(false)) {
                 return@withContext UriParseResult.Success(name = filename)
             }
 
@@ -103,6 +103,14 @@ class ProfileImportHandler(private val context: Context) {
 
     suspend fun parseQRCode(data: String): QRCodeParseResult = withContext(Dispatchers.IO) {
         try {
+            if (data.startsWith("clash://") || data.startsWith("clashmeta://")) {
+                val subscription = io.nekohasekai.sfa.mihomo.SubscriptionLink.parse(data)
+                return@withContext QRCodeParseResult.RemoteProfile(
+                    name = subscription.name ?: "Clash subscription",
+                    host = Uri.parse(subscription.url).host ?: "",
+                    url = subscription.url,
+                )
+            }
             // Check if it's a sing-box remote profile import link
             if (data.startsWith("sing-box://import-remote-profile")) {
                 try {
@@ -147,6 +155,10 @@ class ProfileImportHandler(private val context: Context) {
 
     suspend fun importFromQRCode(data: String): ImportResult = withContext(Dispatchers.IO) {
         try {
+            if (data.startsWith("clash://") || data.startsWith("clashmeta://")) {
+                val subscription = io.nekohasekai.sfa.mihomo.SubscriptionLink.parse(data)
+                return@withContext importRemoteProfile(subscription.name ?: "Clash subscription", subscription.url)
+            }
             // Check if it's a sing-box remote profile import link
             if (data.startsWith("sing-box://import-remote-profile")) {
                 try {
@@ -264,7 +276,9 @@ class ProfileImportHandler(private val context: Context) {
         val fileID = ProfileManager.nextFileID()
         val configDirectory = File(context.filesDir, "configs").also { it.mkdirs() }
         val configFile = File(configDirectory, "$fileID.json")
-        configFile.writeText("{}")
+        val content = io.nekohasekai.sfa.mihomo.SubscriptionClient.fetch(url)
+        io.nekohasekai.sfa.mihomo.CoreConfig.check(content)
+        configFile.writeText(content)
         typedProfile.path = configFile.path
 
         // Create profile in database and select it
@@ -274,13 +288,8 @@ class ProfileImportHandler(private val context: Context) {
     }
 
     private fun extractProfileNameFromUrl(url: String): String {
-        // Extract name from URL or use default
-        return url.substringAfterLast("/")
-            .substringBeforeLast(".")
-            .takeIf { it.isNotEmpty() }
-            ?: "Remote Profile"
+        return Uri.parse(url).lastPathSegment?.substringBeforeLast(".")?.takeIf { it.isNotBlank() } ?: "Remote Profile"
     }
-
     private fun extractHostFromUrl(url: String): String = try {
         val uri = Uri.parse(url)
         uri.host ?: url
@@ -325,7 +334,7 @@ class ProfileImportHandler(private val context: Context) {
             // Validate the JSON configuration using sing-box
             try {
                 // Try to check the configuration
-                Libbox.checkConfig(jsonContent)
+                io.nekohasekai.sfa.mihomo.CoreConfig.check(jsonContent)
             } catch (e: Exception) {
                 // Configuration validation failed
                 return ImportResult.Error(

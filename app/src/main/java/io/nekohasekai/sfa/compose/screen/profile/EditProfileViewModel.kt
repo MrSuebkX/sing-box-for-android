@@ -204,7 +204,7 @@ class EditProfileViewModel(application: Application) : AndroidViewModel(applicat
                 // Update profile object
                 profile.name = state.name
                 profile.icon = state.icon
-                profile.typed.remoteURL = state.remoteUrl
+                profile.typed.remoteURL = io.nekohasekai.sfa.mihomo.SubscriptionLink.parse(state.remoteUrl).url
 
                 // Handle auto-update changes
                 val autoUpdateChanged = state.autoUpdate != state.originalAutoUpdate
@@ -255,8 +255,8 @@ class EditProfileViewModel(application: Application) : AndroidViewModel(applicat
                 var selectedProfileUpdated = false
 
                 // Fetch remote config
-                val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
-                Libbox.checkConfig(content)
+                val content = io.nekohasekai.sfa.mihomo.SubscriptionClient.fetch(profile.typed.remoteURL)
+                io.nekohasekai.sfa.mihomo.CoreConfig.check(content)
 
                 // Check if content changed
                 val file = File(profile.typed.path)

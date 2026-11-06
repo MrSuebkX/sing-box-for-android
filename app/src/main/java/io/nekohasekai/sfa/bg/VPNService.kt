@@ -137,12 +137,16 @@ class VPNService :
                 }
             }
 
+            val mihomo = io.nekohasekai.sfa.mihomo.MihomoRuntime.isRunning
+            var hasAllowedApps = false
             val includePackage = options.includePackage
             if (includePackage.hasNext()) {
                 while (includePackage.hasNext()) {
                     try {
                         val nextPackage = includePackage.next()
+                        if (mihomo && nextPackage == packageName) continue
                         builder.addAllowedApplication(nextPackage)
+                        hasAllowedApps = true
                         Log.d("VPNService", "addAllowedApplication: $nextPackage")
                     } catch (e: NameNotFoundException) {
                         Log.e("VPNService", "addAllowedApplication failed", e)
@@ -150,11 +154,13 @@ class VPNService :
                 }
             }
 
+            if (mihomo && !hasAllowedApps) builder.addDisallowedApplication(packageName)
             val excludePackage = options.excludePackage
             if (excludePackage.hasNext()) {
                 while (excludePackage.hasNext()) {
                     try {
                         val nextPackage = excludePackage.next()
+                        if (hasAllowedApps) continue
                         builder.addDisallowedApplication(nextPackage)
                         Log.d("VPNService", "addDisallowedApplication: $nextPackage")
                     } catch (e: NameNotFoundException) {
@@ -162,6 +168,10 @@ class VPNService :
                     }
                 }
             }
+        }
+
+        if (io.nekohasekai.sfa.mihomo.MihomoRuntime.isRunning && !Settings.perAppProxyEnabled) {
+            builder.addDisallowedApplication(packageName)
         }
 
         if (options.isHTTPProxyEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

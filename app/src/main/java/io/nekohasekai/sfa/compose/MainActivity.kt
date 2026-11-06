@@ -284,6 +284,16 @@ class MainActivity :
             launchCustomTab(uri.toString())
             return
         }
+        if (uri.scheme == "clash" || uri.scheme == "clashmeta") {
+            try {
+                val subscription = io.nekohasekai.sfa.mihomo.SubscriptionLink.parse(uri.toString())
+                pendingImportProfile = Triple(subscription.name ?: "Clash subscription", Uri.parse(subscription.url).host ?: "", subscription.url)
+                showImportProfileDialog = true
+            } catch (e: Exception) {
+                pendingIntentErrorMessage = e.message ?: "Invalid Clash import link"
+            }
+            return
+        }
         if (uri.scheme == "sing-box" && uri.host == "import-remote-profile") {
             try {
                 val profile = Libbox.parseRemoteProfileImportLink(uri.toString())
