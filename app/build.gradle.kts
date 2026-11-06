@@ -72,12 +72,12 @@ android {
     }
 
     defaultConfig {
-        applicationId = "io.nekohasekai.sfa"
+        applicationId = "io.nekohasekai.sfa.dualcore"
         minSdk = 24
         targetSdk = 37
         versionCode = getVersionProps("VERSION_CODE").toInt()
         versionName = getVersionProps("VERSION_NAME")
-        base.archivesName.set("SFA-${versionName}")
+        base.archivesName.set("DualTunnel-${versionName}")
     }
 
     signingConfigs {
@@ -161,6 +161,7 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+            keepDebugSymbols += "**/libmihomo.so"
         }
     }
 
@@ -183,6 +184,9 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+
+    implementation("org.yaml:snakeyaml:2.4")
+    testImplementation("junit:junit:4.13.2")
 
     // libbox
     "playImplementation"(files("libs/libbox.aar"))

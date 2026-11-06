@@ -23,9 +23,9 @@ class HTTPClient : Closeable {
         client.modernTLS()
     }
 
-    fun getString(url: String): String {
+    fun getString(url: String, requestUserAgent: String = userAgent): String {
         val request = client.newRequest()
-        request.setUserAgent(userAgent)
+        request.setUserAgent(requestUserAgent)
         request.setURL(url)
         val response = request.execute()
         return response.content.unwrap

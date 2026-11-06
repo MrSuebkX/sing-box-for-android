@@ -126,7 +126,7 @@ class EditProfileContentViewModel(private val profileId: Long, initialIsReadOnly
                 _uiState.update { it.copy(isCheckingConfig = true) }
 
                 // Check configuration
-                Libbox.checkConfig(content)
+                io.nekohasekai.sfa.mihomo.CoreConfig.check(content)
 
                 // Configuration is valid, clear any error
                 _uiState.update {
@@ -229,7 +229,7 @@ class EditProfileContentViewModel(private val profileId: Long, initialIsReadOnly
                     withContext(Dispatchers.Main) {
                         editor?.getText() ?: ""
                     }
-                val formatted = Libbox.formatConfig(currentContent).unwrap
+                val formatted = if (io.nekohasekai.sfa.mihomo.CoreConfig.clashMap(currentContent) != null) io.nekohasekai.sfa.mihomo.CoreConfig.format(currentContent) else Libbox.formatConfig(currentContent).unwrap
 
                 if (formatted != currentContent) {
                     withContext(Dispatchers.Main) {

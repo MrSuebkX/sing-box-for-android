@@ -121,6 +121,14 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
     private var lastProfileName = ""
 
+    private fun prepareCore(content: String): String {
+        if (io.nekohasekai.sfa.mihomo.CoreConfig.clashMap(content) != null) {
+            require(service is VPNService) { "Mihomo profiles require VPN mode" }
+            return io.nekohasekai.sfa.mihomo.MihomoRuntime.prepare(service, content)
+        }
+        io.nekohasekai.sfa.mihomo.MihomoRuntime.close()
+        return content
+    }
     private suspend fun startService() {
         try {
             val selectedProfileId = Settings.selectedProfile
@@ -150,9 +158,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
             try {
                 commandServer.startOrReloadService(
-                    content,
+                    prepareCore(content),
                     OverrideOptions().apply {
-                        autoRedirect = Settings.autoRedirect
+                        autoRedirect = Settings.autoRedirect && !io.nekohasekai.sfa.mihomo.MihomoRuntime.isRunning
                         if (Vendor.isPerAppProxyAvailable() && Settings.perAppProxyEnabled) {
                             val appList = Settings.getEffectivePerAppProxyList()
                             if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
@@ -188,12 +196,27 @@ class BoxService(private val service: Service, private val platformInterface: Pl
                 notification.show(lastProfileName, R.string.status_started)
             }
             notification.start()
+            monitorMihomo()
         } catch (e: Exception) {
             stopAndAlert(Alert.StartService, e.message)
             return
         }
     }
 
+    private var mihomoMonitor: kotlinx.coroutines.Job? = null
+
+    private fun monitorMihomo() {
+        mihomoMonitor?.cancel()
+        mihomoMonitor = idleModeScope.launch {
+            while (io.nekohasekai.sfa.mihomo.MihomoRuntime.controllerPort != 0) {
+                kotlinx.coroutines.delay(1000)
+                if (!io.nekohasekai.sfa.mihomo.MihomoRuntime.isRunning && io.nekohasekai.sfa.mihomo.MihomoRuntime.controllerPort != 0) {
+                    stopAndAlert(Alert.StartService, "Mihomo stopped unexpectedly. Reconnect to restart it.")
+                    break
+                }
+            }
+        }
+    }
     override fun serviceStop() {
         notification.close()
         status.postValue(Status.Starting)
@@ -202,7 +225,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             pfd.close()
             fileDescriptor = null
         }
-        closeService()
+        closeService(closeCore = false)
     }
 
     override fun serviceReload() {
@@ -232,9 +255,9 @@ class BoxService(private val service: Service, private val platformInterface: Pl
         lastProfileName = profile.name
         try {
             commandServer.startOrReloadService(
-                content,
+                prepareCore(content),
                 OverrideOptions().apply {
-                    autoRedirect = Settings.autoRedirect
+                    autoRedirect = Settings.autoRedirect && !io.nekohasekai.sfa.mihomo.MihomoRuntime.isRunning
                     if (Vendor.isPerAppProxyAvailable() && Settings.perAppProxyEnabled) {
                         val appList = Settings.getEffectivePerAppProxyList()
                         if (Settings.getEffectivePerAppProxyMode() == Settings.PER_APP_PROXY_INCLUDE) {
@@ -250,6 +273,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
             return
         }
 
+        monitorMihomo()
         if (commandServer.needWIFIState()) {
             val wifiPermission =
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -316,7 +340,8 @@ class BoxService(private val service: Service, private val platformInterface: Pl
         }
     }
 
-    private fun closeService() {
+    private fun closeService(closeCore: Boolean = true) {
+        if (closeCore) io.nekohasekai.sfa.mihomo.MihomoRuntime.close()
         runCatching {
             commandServer.closeService()
         }.onFailure {
@@ -390,6 +415,7 @@ class BoxService(private val service: Service, private val platformInterface: Pl
     internal fun onBind(): IBinder = binder
 
     internal fun onDestroy() {
+        io.nekohasekai.sfa.mihomo.MihomoRuntime.close()
         idleModeUpdates.cancel()
         idleModeScope.cancel()
         binder.close()
@@ -459,3 +485,4 @@ class BoxService(private val service: Service, private val platformInterface: Pl
 
     override fun connectSSHAgent(): Int = -1
 }
+

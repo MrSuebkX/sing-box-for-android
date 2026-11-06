@@ -351,8 +351,8 @@ class DashboardViewModel :
 
             try {
                 // Fetch remote config
-                val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
-                Libbox.checkConfig(content)
+                val content = io.nekohasekai.sfa.mihomo.SubscriptionClient.fetch(profile.typed.remoteURL)
+                io.nekohasekai.sfa.mihomo.CoreConfig.check(content)
 
                 // Check if content changed
                 val file = File(profile.typed.path)

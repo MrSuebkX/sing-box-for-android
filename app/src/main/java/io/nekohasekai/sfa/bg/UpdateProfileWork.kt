@@ -75,8 +75,8 @@ class UpdateProfileWork {
                     continue
                 }
                 try {
-                    val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
-                    Libbox.checkConfig(content)
+                    val content = io.nekohasekai.sfa.mihomo.SubscriptionClient.fetch(profile.typed.remoteURL)
+                    io.nekohasekai.sfa.mihomo.CoreConfig.check(content)
                     val file = File(profile.typed.path)
                     if (file.readText() != content) {
                         File(profile.typed.path).writeText(content)

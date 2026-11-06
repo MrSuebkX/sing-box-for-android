@@ -161,6 +161,9 @@ object Settings {
         val selectedProfileId = selectedProfile
         if (selectedProfileId == -1L) return false
         val profile = ProfileManager.get(selectedProfileId) ?: return false
-        return Libbox.hasTunInbound(File(profile.typed.path).readText())
+        val content = File(profile.typed.path).readText()
+        if (io.nekohasekai.sfa.mihomo.CoreConfig.clashMap(content) != null) return true
+        return Libbox.hasTunInbound(content)
     }
 }
+
