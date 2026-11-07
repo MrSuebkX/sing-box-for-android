@@ -62,6 +62,9 @@ jobs:
           echo '2ddbd3aaa884f52b4568f406876ec81dddeef9f1bb67b90d4004d356e2c6a708  '"$RUNNER_TEMP/mihomo.gz" | sha256sum --check
           gzip -dc "$RUNNER_TEMP/mihomo.gz" > app/src/main/jniLibs/arm64-v8a/libmihomo.so
           chmod 755 app/src/main/jniLibs/arm64-v8a/libmihomo.so
+      - name: Bundle verified rule databases for offline first import
+        run: |
+          python3 scripts/bundle-geodata.py
       - uses: gradle/actions/setup-gradle@v4
         with:
           cache-read-only: false

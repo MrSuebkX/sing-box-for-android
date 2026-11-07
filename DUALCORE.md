@@ -12,6 +12,8 @@ YAML and Clash JSON are detected by their `proxies`, `proxy-providers` or `proxy
 
 ## Runtime and controls
 
+The APK bundles checksum-verified GeoIP, GeoSite and ASN database snapshots from MetaCubeX/meta-rules-dat revision `eb50c83a6c152b82847d7fddc9b0e5d895f2ee86`. They are installed before configuration validation, so first import does not need a working proxy or mihomo bootstrap DNS to fetch GEOIP rules. The initial installation replaces incomplete downloads from older builds; later core-managed database updates are preserved. Bundled data is a snapshot, refreshed by updating the pinned build inputs.
+
 For a Clash profile, use **VPN mode** and connect. Mihomo executes Clash rules, providers, DNS and proxy protocols. Libbox supplies the Android VPN transport and forwards TCP/UDP to mihomo's authenticated loopback SOCKS listener; DNS is forwarded to mihomo's loopback resolver, preserving its fake-IP mapping. This is a transport bridge, not a native mihomo TUN integration or a full replacement of every SFA control API.
 
 Open **Mihomo 节点** in the dashboard to select nodes in mihomo Selector groups. Automatic URLTest/Fallback groups continue to be selected by mihomo. The regular SFA connections/statistics describe the VPN bridge; they do not expose mihomo's internal routing decisions or its per-node delay measurements. Mihomo's listeners, TUN and controller settings in a subscription are overridden for local app management. The app UID bypasses the VPN to prevent routing mihomo's outbound sockets back into its own tunnel. Other applications still follow the VPN/per-app policy.
@@ -30,5 +32,6 @@ The APK requires on-device checks of VPN permission, DNS/fake-IP, TCP/UDP, per-a
 - VPN transport: https://github.com/SagerNet/sing-box/tree/v1.15.0-alpha.13
 - Mihomo: https://github.com/MetaCubeX/mihomo/tree/v1.19.33 (GPL-3.0; see upstream LICENSE and naming restrictions).
 - SnakeYAML 2.4: https://bitbucket.org/snakeyaml/snakeyaml (Apache-2.0).
+- Rule databases and their upstream sources/licenses: https://github.com/MetaCubeX/meta-rules-dat. ASN data includes GeoLite2 data created by MaxMind, available from https://www.maxmind.com (CC BY-SA 4.0).
 
 Corresponding fork source and the complete cloud build instructions are available in this repository.

@@ -64,6 +64,7 @@ object MihomoRuntime {
 
     @Synchronized fun validate(context: Context, content: String) {
         val directory = File(context.filesDir, "mihomo").also { it.mkdirs() }
+        BundledGeoData.ensure(context, directory)
         val file = File.createTempFile("check-", ".yaml", context.cacheDir)
         val output = File.createTempFile("check-", ".log", context.cacheDir)
         var child: Process? = null
@@ -73,7 +74,14 @@ object MihomoRuntime {
                 .redirectErrorStream(true).redirectOutput(output).start()
             require(child.awaitExit(45)) { "Mihomo configuration check timed out" }
             // Do not include core output: it can contain subscription credentials.
-            require(child.exitValue() == 0) { "Mihomo rejected this configuration. Check proxies, groups and rules." }
+            require(child.exitValue() == 0) {
+                val log = output.bufferedReader().use { it.readText().takeLast(32768) }
+                when {
+                    log.contains("can't download") -> "Mihomo could not download required rule data. Check network access and custom geodata URLs."
+                    log.contains("dns resolve failed") -> "Mihomo could not resolve a required server. Check the configuration's DNS settings."
+                    else -> "Mihomo rejected this configuration. Check proxies, groups and rules."
+                }
+            }
         } finally {
             child?.destroy()
             file.delete()
@@ -88,6 +96,7 @@ object MihomoRuntime {
         val dns = generateSequence { dnsPort() }.first { it != socks && it != api }
         val token = UUID.randomUUID().toString()
         val directory = File(context.filesDir, "mihomo").also { it.mkdirs() }
+        BundledGeoData.ensure(context, directory)
         val file = File(directory, "runtime.yaml")
         file.writeText(runtimeYaml(content, socks, dns, api, token))
         val child = ProcessBuilder(executable(context), "-d", directory.path, "-f", file.path)
