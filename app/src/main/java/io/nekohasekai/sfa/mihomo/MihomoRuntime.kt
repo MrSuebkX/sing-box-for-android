@@ -118,7 +118,7 @@ object MihomoRuntime {
             val bridge = """
                 {
                   "dns": {"servers": [{"type":"udp","tag":"mihomo-dns","server":"127.0.0.1","server_port":$dns}],"final":"mihomo-dns"},
-                  "inbounds": [{"type":"tun","tag":"vpn","address":["172.19.0.1/30","fdfe:dcba:9876::1/126"],"mtu":1500,"auto_route":true,"stack":"mixed","exclude_package":[${JSONObject.quote(context.packageName)}]}],
+                  "inbounds": [{"type":"tun","tag":"vpn","address":["172.19.0.1/30","fdfe:dcba:9876::1/126"],"mtu":1500,"auto_route":true,"exclude_package":[${JSONObject.quote(context.packageName)}]}],
                   "outbounds": [{"type":"socks","tag":"Mihomo","server":"127.0.0.1","server_port":$socks,"version":"5","username":"$token","password":"$token"}],
                   "route": {"rules":[{"action":"sniff"},{"protocol":"dns","action":"hijack-dns"}],"final":"Mihomo","auto_detect_interface":true}
                 }
