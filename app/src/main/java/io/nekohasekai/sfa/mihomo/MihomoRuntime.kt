@@ -57,7 +57,7 @@ object MihomoRuntime {
         val dns = (map["dns"] as? Map<*, *>)?.entries?.associate { it.key.toString() to it.value }?.toMutableMap() ?: mutableMapOf()
         dns["enable"] = true
         dns["listen"] = "127.0.0.1:$dnsPort"
-        if (dns["nameserver"] == null) dns["nameserver"] = listOf("https://1.1.1.1/dns-query", "https://dns.google/dns-query")
+        if (dns["nameserver"] == null) dns["nameserver"] = listOf("https://223.5.5.5/dns-query", "https://1.1.1.1/dns-query")
         map["dns"] = dns
         return CoreConfig.yaml().dump(map)
     }
