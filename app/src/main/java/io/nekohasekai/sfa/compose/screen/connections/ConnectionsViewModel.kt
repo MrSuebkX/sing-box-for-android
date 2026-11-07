@@ -153,7 +153,7 @@ class ConnectionsViewModel :
     fun closeConnection(connectionId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                CommandTarget.standaloneClient().closeConnection(connectionId)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.close(connectionId) else CommandTarget.standaloneClient().closeConnection(connectionId)
                 withContext(Dispatchers.Main) {
                     sendEvent(ConnectionsEvent.ConnectionClosed(connectionId))
                 }
@@ -166,7 +166,7 @@ class ConnectionsViewModel :
     fun closeAllConnections() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                CommandTarget.standaloneClient().closeConnections()
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.close() else CommandTarget.standaloneClient().closeConnections()
                 withContext(Dispatchers.Main) {
                     sendEvent(ConnectionsEvent.AllConnectionsClosed)
                 }

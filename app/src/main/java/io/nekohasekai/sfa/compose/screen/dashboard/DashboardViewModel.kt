@@ -558,7 +558,7 @@ class DashboardViewModel :
     fun selectClashMode(mode: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                CommandTarget.standaloneClient().setClashMode(mode)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.mode(mode) else CommandTarget.standaloneClient().setClashMode(mode)
                 // Update UI state directly without reconnecting
                 withContext(Dispatchers.Main) {
                     updateState {

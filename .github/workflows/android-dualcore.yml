@@ -50,6 +50,9 @@ jobs:
           ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.0.13004108
           GOMAXPROCS: '2'
         run: |
+          cp ../scripts/mihomo_ui.go experimental/libbox/mihomo_ui.go
+          cp ../scripts/mihomo_ui_test.go experimental/libbox/mihomo_ui_test.go
+          go test ./experimental/libbox -run TestMihomo
           make lib_install
           export PATH="$PATH:$(go env GOPATH)/bin"
           go run ./cmd/internal/build_libbox -target android -platform android/arm64

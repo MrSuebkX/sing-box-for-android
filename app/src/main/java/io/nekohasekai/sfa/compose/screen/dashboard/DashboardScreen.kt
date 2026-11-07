@@ -67,8 +67,6 @@ fun DashboardScreen(
         TopAppBar(
             title = { Text(stringResource(R.string.title_dashboard)) },
             actions = {
-                val panelContext = LocalContext.current
-                androidx.compose.material3.TextButton(onClick = { panelContext.startActivity(android.content.Intent(panelContext, io.nekohasekai.sfa.mihomo.MihomoPanelActivity::class.java)) }) { Text("Mihomo 节点") }
                 Box {
                     IconButton(onClick = { showOthersMenu = true }) {
                         Icon(

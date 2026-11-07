@@ -123,7 +123,6 @@
             </intent-filter>
 
         </activity>
-        <activity android:name=".mihomo.MihomoPanelActivity" android:exported="false" />
         <activity
             android:name=".compose.ShareActivity"
             android:excludeFromRecents="true"

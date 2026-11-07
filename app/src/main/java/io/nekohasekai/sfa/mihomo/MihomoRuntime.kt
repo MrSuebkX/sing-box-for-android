@@ -104,8 +104,10 @@ object MihomoRuntime {
         process = child
         secret = token
         controllerPort = api
-        // Drain without logging private URLs or growing an unbounded log file.
-        thread(name = "mihomo-output", isDaemon = true) { runCatching { child.inputStream.use { stream -> val buffer = ByteArray(4096); while (stream.read(buffer) != -1) { /* drain */ } } } }
+        MihomoControl.clearLogs()
+        thread(name = "mihomo-output", isDaemon = true) {
+            runCatching { child.inputStream.bufferedReader().useLines { lines -> lines.forEach { MihomoControl.appendLog(it) } } }
+        }
         try {
             val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(45)
             while (true) {
