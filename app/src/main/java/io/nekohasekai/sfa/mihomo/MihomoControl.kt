@@ -32,6 +32,9 @@ object MihomoControl {
         } finally { connection.disconnect() }
     }
     fun select(group: String, item: String) { request("/proxies/${path(group)}", "PUT", JSONObject().put("name", item)) }
+    private val preferences get() = io.nekohasekai.sfa.Application.application.getSharedPreferences("mihomo-ui", android.content.Context.MODE_PRIVATE)
+    fun expanded(group: String): Boolean = preferences.getBoolean(group, true)
+    fun expand(group: String, expanded: Boolean) { preferences.edit().putBoolean(group, expanded).apply() }
     fun mode(mode: String) { request("/configs", "PATCH", JSONObject().put("mode", mode)) }
     fun close(id: String? = null) { request(if (id == null) "/connections" else "/connections/${path(id)}", "DELETE") }
     fun test(tag: String) {

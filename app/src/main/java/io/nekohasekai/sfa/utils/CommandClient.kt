@@ -108,23 +108,13 @@ open class CommandClient(
             while (isActiveEpoch(epoch) && io.nekohasekai.sfa.mihomo.MihomoControl.active) {
                 try {
                     val api = io.nekohasekai.sfa.mihomo.MihomoControl
-                    if (ConnectionType.Groups in connectionTypes || ConnectionType.Outbounds in connectionTypes) {
+                    if (ConnectionType.Groups in connectionTypes) {
                         val iterator = Libbox.parseMihomoGroups(api.request("/proxies").toString())
                         val groups = mutableListOf<OutboundGroup>()
-                        while (iterator.hasNext()) groups.add(iterator.next())
+                        while (iterator.hasNext()) { val group = iterator.next(); group.isExpand = api.expanded(group.tag); groups.add(group) }
                         if (!isActiveEpoch(epoch)) break
                         cachedGroups = groups
                         if (ConnectionType.Groups in connectionTypes) getAllHandlers().forEach { it.updateGroups(groups) }
-                        if (ConnectionType.Outbounds in connectionTypes) {
-                            val items = groups.flatMap { group ->
-                                val result = mutableListOf<io.nekohasekai.libbox.OutboundGroupItem>()
-                                val entries = group.items
-                                while (entries.hasNext()) result.add(entries.next())
-                                result
-                            }.distinctBy { it.tag }
-                            cachedOutbounds = items
-                            getAllHandlers().forEach { it.updateOutbounds(items) }
-                        }
                     }
                     if (ConnectionType.ClashMode in connectionTypes) {
                         val mode = api.request("/configs").getString("mode")
@@ -281,7 +271,6 @@ open class CommandClient(
         }
 
         override fun writeOutbounds(message: OutboundGroupItemIterator?) {
-            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (message == null || !isActiveEpoch(epoch)) {
                 return
             }

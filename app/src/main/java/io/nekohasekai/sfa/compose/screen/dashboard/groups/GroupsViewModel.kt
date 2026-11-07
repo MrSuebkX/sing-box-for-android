@@ -138,7 +138,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
         }
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                if (!io.nekohasekai.sfa.mihomo.MihomoControl.active) CommandTarget.standaloneClient().setGroupExpand(groupTag, newExpanded)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.expand(groupTag, newExpanded) else CommandTarget.standaloneClient().setGroupExpand(groupTag, newExpanded)
             }
         }
     }
@@ -159,7 +159,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
         viewModelScope.launch(Dispatchers.IO) {
             groups.forEach { group ->
                 runCatching {
-                    if (!io.nekohasekai.sfa.mihomo.MihomoControl.active) CommandTarget.standaloneClient().setGroupExpand(group.tag, newExpanded)
+                    if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.expand(group.tag, newExpanded) else CommandTarget.standaloneClient().setGroupExpand(group.tag, newExpanded)
                 }
             }
         }

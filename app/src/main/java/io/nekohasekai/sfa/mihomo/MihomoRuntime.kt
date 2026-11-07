@@ -54,6 +54,9 @@ object MihomoRuntime {
         map["tun"] = mapOf("enable" to false)
         map["external-controller"] = "127.0.0.1:$api"
         map["secret"] = token
+        val profile = (map["profile"] as? Map<*, *>)?.entries?.associate { it.key.toString() to it.value }?.toMutableMap() ?: mutableMapOf()
+        profile["store-selected"] = true
+        map["profile"] = profile
         val dns = (map["dns"] as? Map<*, *>)?.entries?.associate { it.key.toString() to it.value }?.toMutableMap() ?: mutableMapOf()
         dns["enable"] = true
         dns["listen"] = "127.0.0.1:$dnsPort"
