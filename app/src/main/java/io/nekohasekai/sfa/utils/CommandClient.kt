@@ -105,6 +105,7 @@ open class CommandClient(
         mihomoJob = scope.launch(Dispatchers.IO) {
             val connections = Libbox.newMihomoConnections()
             var logCursor = 0L
+            if (ConnectionType.Log in connectionTypes) getAllHandlers().forEach { it.clearLogs(); it.setDefaultLogLevel(4) }
             while (isActiveEpoch(epoch) && io.nekohasekai.sfa.mihomo.MihomoControl.active) {
                 try {
                     val api = io.nekohasekai.sfa.mihomo.MihomoControl
@@ -283,16 +284,19 @@ open class CommandClient(
         }
 
         override fun setDefaultLogLevel(level: Int) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (!isActiveEpoch(epoch)) return
             getAllHandlers().forEach { it.setDefaultLogLevel(level) }
         }
 
         override fun clearLogs() {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (!isActiveEpoch(epoch)) return
             getAllHandlers().forEach { it.clearLogs() }
         }
 
         override fun writeLogs(messageList: LogIterator?) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (messageList == null || !isActiveEpoch(epoch)) {
                 return
             }
