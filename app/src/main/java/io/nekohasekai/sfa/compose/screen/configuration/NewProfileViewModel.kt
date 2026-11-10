@@ -269,7 +269,7 @@ class NewProfileViewModel(application: Application) : AndroidViewModel(applicati
             }
 
         // Validate config
-        Libbox.checkConfig(configContent)
+        io.nekohasekai.sfa.mihomo.CoreConfig.check(configContent)
         configFile.writeText(configContent)
 
         // Create profile in database and select it
@@ -283,7 +283,7 @@ class NewProfileViewModel(application: Application) : AndroidViewModel(applicati
         val typedProfile =
             TypedProfile().apply {
                 type = TypedProfile.Type.Remote
-                remoteURL = state.remoteUrl
+                remoteURL = io.nekohasekai.sfa.mihomo.SubscriptionLink.parse(state.remoteUrl).url
                 autoUpdate = state.autoUpdate
                 autoUpdateInterval = state.autoUpdateInterval
                 lastUpdated = Date()
@@ -300,8 +300,8 @@ class NewProfileViewModel(application: Application) : AndroidViewModel(applicati
         typedProfile.path = configFile.path
 
         // Fetch initial config - this MUST succeed for remote profiles
-        val content = HTTPClient().use { it.getString(state.remoteUrl) }
-        Libbox.checkConfig(content)
+        val content = io.nekohasekai.sfa.mihomo.SubscriptionClient.fetch(state.remoteUrl)
+        io.nekohasekai.sfa.mihomo.CoreConfig.check(content)
         val configContent = content
 
         configFile.writeText(configContent)

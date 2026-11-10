@@ -41,7 +41,8 @@
         android:description="@string/xposed_description"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="DualTunnel"
+        android:networkSecurityConfig="@xml/dualcore_network_security"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:targetApi="31">
@@ -77,6 +78,13 @@
 
             </intent-filter>
 
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="clash" android:host="install-config" />
+                <data android:scheme="clashmeta" android:host="install-config" />
+            </intent-filter>
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.VIEW" />
 
@@ -185,6 +193,7 @@
         <receiver
             android:name=".bg.BootReceiver"
             android:exported="true">
+
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

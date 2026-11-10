@@ -115,7 +115,7 @@ class LogViewModel :
             val sent =
                 withContext(Dispatchers.IO) {
                     runCatching {
-                        CommandTarget.standaloneClient().clearLogs()
+                        if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.clearLogs() else CommandTarget.standaloneClient().clearLogs()
                     }.isSuccess
                 }
             // With the service stopped there is no broadcast to clear the UI,

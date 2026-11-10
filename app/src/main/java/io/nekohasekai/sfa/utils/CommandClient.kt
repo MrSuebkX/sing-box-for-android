@@ -98,8 +98,53 @@ open class CommandClient(
     private val access = Any()
     private var connectionEpoch = 0
     private var commandClient: io.nekohasekai.libbox.CommandClient? = null
+    private var mihomoJob: kotlinx.coroutines.Job? = null
+
+    private fun startMihomoUpdates(epoch: Int) {
+        mihomoJob?.cancel()
+        mihomoJob = scope.launch(Dispatchers.IO) {
+            val connections = Libbox.newMihomoConnections()
+            var logCursor = 0L
+            if (ConnectionType.Log in connectionTypes) getAllHandlers().forEach { it.clearLogs(); it.setDefaultLogLevel(4) }
+            while (isActiveEpoch(epoch) && io.nekohasekai.sfa.mihomo.MihomoControl.active) {
+                try {
+                    val api = io.nekohasekai.sfa.mihomo.MihomoControl
+                    if (ConnectionType.Groups in connectionTypes) {
+                        val iterator = Libbox.parseMihomoGroups(api.request("/proxies").toString())
+                        val groups = mutableListOf<OutboundGroup>()
+                        while (iterator.hasNext()) { val group = iterator.next(); group.isExpand = api.expanded(group.tag); groups.add(group) }
+                        if (!isActiveEpoch(epoch)) break
+                        cachedGroups = groups
+                        if (ConnectionType.Groups in connectionTypes) getAllHandlers().forEach { it.updateGroups(groups) }
+                    }
+                    if (ConnectionType.ClashMode in connectionTypes) {
+                        val mode = api.request("/configs").getString("mode")
+                        if (isActiveEpoch(epoch)) getAllHandlers().forEach { it.initializeClashMode(listOf("rule", "global", "direct"), mode) }
+                    }
+                    if (ConnectionType.Connections in connectionTypes) {
+                        val events = connections.update(api.request("/connections").toString())
+                        if (isActiveEpoch(epoch)) getAllHandlers().forEach { it.writeConnectionEvents(events) }
+                    }
+                    if (ConnectionType.Log in connectionTypes) {
+                        val snapshot = api.logSnapshot(logCursor)
+                        val entries = snapshot.map { (_, line) -> LogEntry().apply {
+                            level = when { line.contains("level=error") -> 2; line.contains("level=warning") -> 3; line.contains("level=debug") -> 5; else -> 4 }
+                            message = "[mihomo] $line"
+                        } }
+                        snapshot.lastOrNull()?.let { logCursor = it.first }
+                        if (entries.isNotEmpty() && isActiveEpoch(epoch)) getAllHandlers().forEach { it.appendLogs(entries) }
+                    }
+                } catch (e: Exception) {
+                    if (e is kotlinx.coroutines.CancellationException) throw e
+                    if (isActiveEpoch(epoch)) handler.onConnectionError("Mihomo: ${e.message}")
+                }
+                kotlinx.coroutines.delay(1000)
+            }
+        }
+    }
 
     fun connect() {
+        mihomoJob?.cancel()
         val epoch: Int
         val previousClient: io.nekohasekai.libbox.CommandClient?
         synchronized(access) {
@@ -148,6 +193,7 @@ open class CommandClient(
                         io.nekohasekai.libbox.CommandClient(ClientHandler(epoch), options)
                     }
                 newClient.connect()
+                if (isActiveEpoch(epoch) && io.nekohasekai.sfa.mihomo.MihomoControl.active) startMihomoUpdates(epoch)
             } catch (e: Exception) {
                 Log.d("CommandClient", "connect failed", e)
                 if (isActiveEpoch(epoch)) {
@@ -174,6 +220,8 @@ open class CommandClient(
 
     @OptIn(DelicateCoroutinesApi::class)
     fun disconnect() {
+        mihomoJob?.cancel()
+        mihomoJob = null
         val client: io.nekohasekai.libbox.CommandClient?
         synchronized(access) {
             connectionEpoch++
@@ -211,6 +259,7 @@ open class CommandClient(
         }
 
         override fun writeGroups(message: OutboundGroupIterator?) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (message == null || !isActiveEpoch(epoch)) {
                 return
             }
@@ -235,16 +284,19 @@ open class CommandClient(
         }
 
         override fun setDefaultLogLevel(level: Int) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (!isActiveEpoch(epoch)) return
             getAllHandlers().forEach { it.setDefaultLogLevel(level) }
         }
 
         override fun clearLogs() {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (!isActiveEpoch(epoch)) return
             getAllHandlers().forEach { it.clearLogs() }
         }
 
         override fun writeLogs(messageList: LogIterator?) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (messageList == null || !isActiveEpoch(epoch)) {
                 return
             }
@@ -258,17 +310,20 @@ open class CommandClient(
         }
 
         override fun initializeClashMode(modeList: StringIterator, currentMode: String) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (!isActiveEpoch(epoch)) return
             val modes = modeList.toList()
             getAllHandlers().forEach { it.initializeClashMode(modes, currentMode) }
         }
 
         override fun updateClashMode(newMode: String) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (!isActiveEpoch(epoch)) return
             getAllHandlers().forEach { it.updateClashMode(newMode) }
         }
 
         override fun writeConnectionEvents(events: ConnectionEvents?) {
+            if (io.nekohasekai.sfa.mihomo.MihomoControl.active) return
             if (events == null || !isActiveEpoch(epoch)) return
             getAllHandlers().forEach { it.writeConnectionEvents(events) }
         }

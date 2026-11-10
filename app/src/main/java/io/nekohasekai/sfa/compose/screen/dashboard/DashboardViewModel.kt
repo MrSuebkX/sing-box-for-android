@@ -351,8 +351,8 @@ class DashboardViewModel :
 
             try {
                 // Fetch remote config
-                val content = HTTPClient().use { it.getString(profile.typed.remoteURL) }
-                Libbox.checkConfig(content)
+                val content = io.nekohasekai.sfa.mihomo.SubscriptionClient.fetch(profile.typed.remoteURL)
+                io.nekohasekai.sfa.mihomo.CoreConfig.check(content)
 
                 // Check if content changed
                 val file = File(profile.typed.path)
@@ -558,7 +558,7 @@ class DashboardViewModel :
     fun selectClashMode(mode: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                CommandTarget.standaloneClient().setClashMode(mode)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.mode(mode) else CommandTarget.standaloneClient().setClashMode(mode)
                 // Update UI state directly without reconnecting
                 withContext(Dispatchers.Main) {
                     updateState {

@@ -138,7 +138,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
         }
         viewModelScope.launch(Dispatchers.IO) {
             runCatching {
-                CommandTarget.standaloneClient().setGroupExpand(groupTag, newExpanded)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.expand(groupTag, newExpanded) else CommandTarget.standaloneClient().setGroupExpand(groupTag, newExpanded)
             }
         }
     }
@@ -159,7 +159,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
         viewModelScope.launch(Dispatchers.IO) {
             groups.forEach { group ->
                 runCatching {
-                    CommandTarget.standaloneClient().setGroupExpand(group.tag, newExpanded)
+                    if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.expand(group.tag, newExpanded) else CommandTarget.standaloneClient().setGroupExpand(group.tag, newExpanded)
                 }
             }
         }
@@ -176,7 +176,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // Select the new outbound immediately
-                CommandTarget.standaloneClient().selectOutbound(groupTag, itemTag)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.select(groupTag, itemTag) else CommandTarget.standaloneClient().selectOutbound(groupTag, itemTag)
 
                 // Update local state and show snackbar
                 withContext(Dispatchers.Main) {
@@ -204,7 +204,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
     fun closeConnections() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                CommandTarget.standaloneClient().closeConnections()
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.close() else CommandTarget.standaloneClient().closeConnections()
                 withContext(Dispatchers.Main) {
                     dismissCloseConnectionsSnackbar()
                 }
@@ -226,7 +226,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
     fun urlTest(outboundTag: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                CommandTarget.standaloneClient().urlTest(outboundTag)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.test(outboundTag) else CommandTarget.standaloneClient().urlTest(outboundTag)
             } catch (e: Exception) {
                 sendError(e)
             }
@@ -237,7 +237,7 @@ class GroupsViewModel(private val sharedCommandClient: CommandClient? = null) :
         updateState { copy(testingGroups = testingGroups + groupTag) }
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                CommandTarget.standaloneClient().urlTest(groupTag)
+                if (io.nekohasekai.sfa.mihomo.MihomoControl.active) io.nekohasekai.sfa.mihomo.MihomoControl.test(groupTag) else CommandTarget.standaloneClient().urlTest(groupTag)
             } catch (e: Exception) {
                 sendError(e)
             } finally {
