@@ -14,7 +14,7 @@ func TestMihomoConnections(t *testing.T) {
  first:=`{"connections":[{"id":"one","start":"2026-11-07T00:00:00Z","upload":10,"download":20,"rule":"DomainSuffix","rulePayload":"example.com","chains":["node","choose"],"metadata":{"network":"tcp","destinationIP":"1.2.3.4","destinationPort":"443","host":"example.com"}}]}`
  events,err:=state.Update(first);if err!=nil{t.Fatal(err)}
  c:=events.Iterator().Next().Connection
- if c.Domain!="example.com" || c.Outbound!="node" || c.DownlinkTotal!=20 {t.Fatal("incorrect connection mapping")}
+ if c.Domain!="example.com" || c.Outbound!="node" || c.DownlinkTotal!=20 || c.IPVersion!=4 {t.Fatal("incorrect connection mapping")}
  events,err=state.Update(`{"connections":[]}`);if err!=nil{t.Fatal(err)}
  if events.Iterator().Next().Connection.ClosedAt==0{t.Fatal("closed connection lost")}
  if _,err=state.Update(`broken`);err==nil{t.Fatal("invalid JSON accepted")}

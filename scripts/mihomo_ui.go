@@ -3,6 +3,7 @@ package libbox
 import (
  "encoding/json"
  "fmt"
+ "net"
  "sort"
  "strings"
  "time"
@@ -60,6 +61,7 @@ func (s *MihomoConnections) Update(content string) (*ConnectionEvents,error) {
   destination:=fmt.Sprintf("%s:%s",m.DestinationIP,m.DestinationPort)
   if strings.Contains(m.DestinationIP,":"){destination=fmt.Sprintf("[%s]:%s",m.DestinationIP,m.DestinationPort)}
   c:=&Connection{ID:item.ID,Inbound:"mihomo",InboundType:strings.ToLower(m.Type),Network:m.Network,Source:m.SourceIP+":"+m.SourcePort,Destination:destination,Domain:m.Host,CreatedAt:item.Start.UnixMilli(),Uplink:up,Downlink:down,UplinkTotal:item.Upload,DownlinkTotal:item.Download,Rule:item.Rule+" "+item.RulePayload,Outbound:outbound,OutboundType:"mihomo",chainList:item.Chains}
+  if ip:=net.ParseIP(m.DestinationIP); ip!=nil { if ip.To4()!=nil {c.IPVersion=4} else {c.IPVersion=6} }
   if m.ProcessPath!="" {c.ProcessInfo=&ProcessInfo{ProcessPath:m.ProcessPath,UserName:m.Process}}
   s.previous[item.ID]=c;active[item.ID]=true
  }
